@@ -1,0 +1,27 @@
+{
+    "name": "majeedfahad/budget-manager",
+    "description": "A budget manager for Laravel Application",
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {
+            "Majeedfahad\\BudgetManager\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Majeed",
+            "email": "aabdulmajeed16@gmail.com"
+        }
+    ],
+    "require": {
+        "laravel/framework": "^10.10",
+        "php": "^8.1"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Majeedfahad\\BudgetManager\\Providers\\BudgetManagerServiceProvider"
+            ]
+        }
+    }
+}
