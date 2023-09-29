@@ -16,4 +16,9 @@ trait HasBudget
     {
         return $this->name ?? null;
     }
+
+    public function getBudgetAttribute()
+    {
+        return $this->financialBudget->budget;
+    }
 }
