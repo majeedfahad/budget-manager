@@ -17,7 +17,7 @@ return new class extends Migration
             $table->id();
             $table->morphs('expensable');
             $table->double('amount');
-            $table->unsignedInteger('financial_budget_id');
+            $table->unsignedBigInteger('financial_budget_id');
             $table->timestamps();
 
             $table->foreign('financial_budget_id')->references('id')->on('financial_budgets')

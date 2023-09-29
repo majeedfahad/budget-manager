@@ -19,6 +19,8 @@ return new class extends Migration
             $table->morphs('budgetable');
             $table->unsignedInteger('parent_id')->nullable();
             $table->timestamps();
+
+            $table->unique(['budgetable_type', 'budgetable_id', 'parent_id']);
         });
     }
 

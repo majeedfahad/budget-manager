@@ -2,6 +2,7 @@
 
 namespace Majeedfahad\BudgetManager\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Majeedfahad\BudgetManager\Contracts\Budgetable;
 use Majeedfahad\BudgetManager\Contracts\Expensable;
@@ -15,7 +16,7 @@ class FinancialBudget extends Model
     use HasFactory;
 
     protected $guarded = [];
-    protected $appends = ['remainingAmount'];
+    protected $appends = ['remainingExpensedAmount'];
 
     public function budgetable(): MorphTo
     {
@@ -37,9 +38,39 @@ class FinancialBudget extends Model
         return $this->hasMany(FinancialExpense::class, 'financial_budget_id');
     }
 
-    public function getRemainingAmountAttribute()
+    public function getRemainingExpensedAmountAttribute()
     {
         return $this->budget - $this->getExpenses();
+    }
+
+    public function getRemainingAllocatedAmountAttribute()
+    {
+        return $this->budget - $this->getAllocatedAmount();
+    }
+
+    public function canAddChild(float $amount): bool
+    {
+        return $amount <= $this->remainingAllocatedAmount;
+    }
+
+    public function canAddExpense(float $amount): bool
+    {
+        return $amount <= $this->remainingExpensedAmount;
+    }
+
+    public function canUpdateChild(FinancialBudget $child, $budget): bool
+    {
+        $this->children->firstWhere('id', $child->id)->budget = 0;
+
+        return $this->canAddChild($budget);
+    }
+
+    public function getChild(Budgetable $budgetable)
+    {
+        return $this->children
+            ->where('budgetable_id', $budgetable->id)
+            ->where('budgetable_type', get_class($budgetable))
+            ->first();
     }
 
     public function updateBudget(float $budget): bool
@@ -48,12 +79,11 @@ class FinancialBudget extends Model
             throw new \Exception("New budget is lower than expensed");
         }
 
-        return $this->update(['budget' => $budget]);
-    }
+        if($this->parent && !$this->parent->canUpdateChild($this, $budget)) {
+            throw new \Exception("لا يمكن اضافة هذا المبلغ ($budget)");
+        }
 
-    public function canAddExpense(float $amount): bool
-    {
-        return $amount <= $this->remainingAmount;
+        return $this->update(['budget' => $budget]);
     }
 
     public function getExpenses()
@@ -74,10 +104,15 @@ class FinancialBudget extends Model
         return $total;
     }
 
-    public function addChildren(Budgetable $obj, $budget = 0)
+    public function getAllocatedAmount()
     {
-        if(!$this->canAddExpense($budget)) {
-            throw new \Exception("لا يمكن اضافة هذا المبلغ ($budget)");
+        return $this->children->pluck('budget')->sum();
+    }
+
+    public function addChild(Budgetable $obj, $budget = 0)
+    {
+        if(!$this->canAddChild($budget)) {
+            throw new \Exception("Cannot add the budget $budget.");
         }
 
         return $obj->financialBudget()->create([
