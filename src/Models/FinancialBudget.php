@@ -113,7 +113,7 @@ class FinancialBudget extends Model
     public function addChild(Budgetable $obj, $budget = 0)
     {
         if(!$this->canAddChild($budget)) {
-            throw new \BudgetNotAllowedException("Budget $budget is greater than remaining allocated amount.");
+            throw new BudgetNotAllowedException("Budget $budget is greater than remaining allocated amount.");
         }
 
         return $obj->financialBudget()->create([
