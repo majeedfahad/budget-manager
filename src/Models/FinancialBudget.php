@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Majeedfahad\BudgetManager\Exceptions\BudgetNotAllowedException;
 
 class FinancialBudget extends Model
 {
@@ -124,7 +125,7 @@ class FinancialBudget extends Model
     public function addExpense(Expensable $obj, $amount = 0)
     {
         if(!$this->canAddExpense($amount)) {
-            throw new \BudgetNotAllowedException("Budget $amount is greater than remaining expensed amount");
+            throw new BudgetNotAllowedException("Budget $amount is greater than remaining expensed amount");
         }
 
         return $obj->expense()->create([

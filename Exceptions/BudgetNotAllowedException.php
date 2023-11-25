@@ -1,5 +1,6 @@
 <?php
 
+namespace Majeedfahad\BudgetManager\Exceptions;
 
 use Exception;
 
