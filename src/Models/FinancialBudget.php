@@ -112,7 +112,7 @@ class FinancialBudget extends Model
     public function addChild(Budgetable $obj, $budget = 0)
     {
         if(!$this->canAddChild($budget)) {
-            throw new \Exception("Cannot add the budget $budget.");
+            throw new \BudgetNotAllowedException("Budget $budget is greater than remaining allocated amount.");
         }
 
         return $obj->financialBudget()->create([
@@ -124,7 +124,7 @@ class FinancialBudget extends Model
     public function addExpense(Expensable $obj, $amount = 0)
     {
         if(!$this->canAddExpense($amount)) {
-            throw new \Exception("لا يمكن اضافة هذا المبلغ ($amount)");
+            throw new \BudgetNotAllowedException("Budget $amount is greater than remaining expensed amount");
         }
 
         return $obj->expense()->create([
