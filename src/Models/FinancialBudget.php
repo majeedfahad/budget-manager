@@ -81,7 +81,7 @@ class FinancialBudget extends Model
         }
 
         if($this->parent && !$this->parent->canUpdateChild($this, $budget)) {
-            throw new \Exception("لا يمكن اضافة هذا المبلغ ($budget)");
+            throw new BudgetNotAllowedException("لا يمكن اضافة هذا المبلغ ($budget)");
         }
 
         return $this->update(['budget' => $budget]);
