@@ -11,10 +11,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Majeedfahad\BudgetManager\Exceptions\BudgetNotAllowedException;
+use Staudenmeir\LaravelAdjacencyList\Eloquent\HasRecursiveRelationships;
 
 class FinancialBudget extends Model
 {
-    use HasFactory;
+    use HasFactory, HasRecursiveRelationships;
 
     protected $guarded = [];
     protected $appends = ['remainingExpensedAmount'];
