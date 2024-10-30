@@ -11,10 +11,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Majeedfahad\BudgetManager\Exceptions\BudgetNotAllowedException;
+use Staudenmeir\LaravelAdjacencyList\Eloquent\HasRecursiveRelationships;
 
 class FinancialBudget extends Model
 {
-    use HasFactory;
+    use HasFactory, HasRecursiveRelationships;
 
     protected $guarded = [];
     protected $appends = ['remainingExpensedAmount'];
@@ -77,11 +78,15 @@ class FinancialBudget extends Model
     public function updateBudget(float $budget): bool
     {
         if($budget < $this->getExpenses()) {
-            throw new \Exception("New budget is lower than expensed");
+            throw new \Exception('children_expenses_amount_constraint');
         }
 
         if($this->parent && !$this->parent->canUpdateChild($this, $budget)) {
             throw new BudgetNotAllowedException("لا يمكن اضافة هذا المبلغ ($budget)");
+        }
+
+        if($budget < $this->getAllocatedAmount()){
+            throw new \Exception('children_allocated_amount_constraint');
         }
 
         return $this->update(['budget' => $budget]);
