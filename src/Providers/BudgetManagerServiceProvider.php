@@ -11,7 +11,7 @@ class BudgetManagerServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->mergeConfigFrom(__DIR__ . '/../../config/budget-manager.php', 'budget-manager');
     }
 
     /**
@@ -20,5 +20,9 @@ class BudgetManagerServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+
+        $this->publishes([
+            __DIR__ . '/../../config/budget-manager.php' => config_path('budget-manager.php'),
+        ], 'budget-manager-config');
     }
 }

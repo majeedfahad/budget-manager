@@ -4,6 +4,8 @@ namespace Majeedfahad\BudgetManager\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class FinancialExpense extends Model
 {
@@ -11,12 +13,23 @@ class FinancialExpense extends Model
 
     protected $guarded = [];
 
-    public function expensable()
+    protected $casts = [
+        'amount' => 'decimal:2',
+    ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $model) {
+            $model->currency ??= config('budget-manager.default_currency');
+        });
+    }
+
+    public function expensable(): MorphTo
     {
         return $this->morphTo();
     }
 
-    public function budget()
+    public function budget(): BelongsTo
     {
         return $this->belongsTo(FinancialBudget::class, 'financial_budget_id');
     }

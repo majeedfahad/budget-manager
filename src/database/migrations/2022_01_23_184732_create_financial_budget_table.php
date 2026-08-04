@@ -15,7 +15,8 @@ return new class extends Migration
     {
         Schema::create('financial_budgets', function (Blueprint $table) {
             $table->id();
-            $table->double('budget');
+            $table->decimal('amount', 15, 2);
+            $table->char('currency', 3);
             $table->morphs('budgetable');
             $table->unsignedInteger('parent_id')->nullable();
             $table->timestamps();

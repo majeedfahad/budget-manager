@@ -16,7 +16,8 @@ return new class extends Migration
         Schema::create('financial_expenses', function (Blueprint $table) {
             $table->id();
             $table->morphs('expensable');
-            $table->double('amount');
+            $table->decimal('amount', 15, 2);
+            $table->char('currency', 3);
             $table->unsignedBigInteger('financial_budget_id');
             $table->timestamps();
 

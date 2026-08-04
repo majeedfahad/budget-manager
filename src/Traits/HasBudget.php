@@ -19,6 +19,6 @@ trait HasBudget
 
     public function getBudgetAttribute()
     {
-        return $this->financialBudget->budget;
+        return $this->financialBudget->amount;
     }
 }
