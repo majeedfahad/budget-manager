@@ -3,22 +3,12 @@
 namespace Majeedfahad\BudgetManager\Traits;
 
 use Illuminate\Database\Eloquent\Relations\MorphOne;
-use Majeedfahad\BudgetManager\Models\FinancialBudget;
+use Majeedfahad\BudgetManager\Models\Budget;
 
 trait HasBudget
 {
-    public function financialBudget(): MorphOne
+    public function budget(): MorphOne
     {
-        return $this->morphOne(FinancialBudget::class, 'budgetable');
-    }
-
-    public function getFinancialBudgetName(): string|null
-    {
-        return $this->name ?? null;
-    }
-
-    public function getBudgetAttribute()
-    {
-        return $this->financialBudget->amount;
+        return $this->morphOne(Budget::class, 'budgetable');
     }
 }

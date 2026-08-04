@@ -13,15 +13,15 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('financial_expenses', function (Blueprint $table) {
+        Schema::create('expenses', function (Blueprint $table) {
             $table->id();
             $table->morphs('expensable');
             $table->decimal('amount', 15, 2);
             $table->char('currency', 3);
-            $table->unsignedBigInteger('financial_budget_id');
+            $table->unsignedBigInteger('budget_id');
             $table->timestamps();
 
-            $table->foreign('financial_budget_id')->references('id')->on('financial_budgets')
+            $table->foreign('budget_id')->references('id')->on('budgets')
                 ->onUpdate('cascade')
                 ->onDelete('cascade');
         });
@@ -34,6 +34,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('financial_expenses');
+        Schema::dropIfExists('expenses');
     }
 };

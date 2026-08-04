@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
-class FinancialExpense extends Model
+class Expense extends Model
 {
     use HasFactory;
 
@@ -31,6 +31,6 @@ class FinancialExpense extends Model
 
     public function budget(): BelongsTo
     {
-        return $this->belongsTo(FinancialBudget::class, 'financial_budget_id');
+        return $this->belongsTo(Budget::class, 'budget_id');
     }
 }

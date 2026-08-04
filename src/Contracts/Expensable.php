@@ -2,7 +2,8 @@
 
 namespace Majeedfahad\BudgetManager\Contracts;
 
-interface Expensable {
-    public function expense();
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 
+interface Expensable {
+    public function expense(): MorphOne;
 }

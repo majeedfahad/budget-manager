@@ -2,7 +2,8 @@
 
 namespace Majeedfahad\BudgetManager\Contracts;
 
+use Illuminate\Database\Eloquent\Relations\MorphOne;
+
 interface Budgetable {
-    public function financialBudget();
-    public function getFinancialBudgetName();
+    public function budget(): MorphOne;
 }

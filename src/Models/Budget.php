@@ -5,6 +5,7 @@ namespace Majeedfahad\BudgetManager\Models;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Majeedfahad\BudgetManager\Contracts\Budgetable;
 use Majeedfahad\BudgetManager\Contracts\Expensable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -12,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Majeedfahad\BudgetManager\Exceptions\BudgetNotAllowedException;
 use Staudenmeir\LaravelAdjacencyList\Eloquent\HasRecursiveRelationships;
 
-class FinancialBudget extends Model
+class Budget extends Model
 {
     use HasFactory, HasRecursiveRelationships;
 
@@ -35,32 +36,36 @@ class FinancialBudget extends Model
         return $this->morphTo();
     }
 
-    public function financialExpenses(): HasMany
+    public function expenses(): HasMany
     {
-        return $this->hasMany(FinancialExpense::class, 'financial_budget_id');
+        return $this->hasMany(Expense::class, 'budget_id');
     }
 
-    public function getRemainingExpensedAmountAttribute(): float
+    public function remainingExpensedAmount(): Attribute
     {
-        return (float) $this->amount - $this->getExpenses();
+        return Attribute::make(
+            get: fn () => (float) $this->amount - $this->getExpenses(),
+        );
     }
 
-    public function getRemainingAllocatedAmountAttribute(): float
+    public function remainingAllocatedAmount(): Attribute
     {
-        return (float) $this->amount - $this->getAllocatedAmount();
+        return Attribute::make(
+            get: fn () => (float) $this->amount - $this->getAllocatedAmount(),
+        );
     }
 
     public function canAddChild(float $amount): bool
     {
-        return $amount <= $this->remainingAllocatedAmount;
+        return $amount <= $this->remaining_allocated_amount;
     }
 
     public function canAddExpense(float $amount): bool
     {
-        return $amount <= $this->remainingExpensedAmount;
+        return $amount <= $this->remaining_expensed_amount;
     }
 
-    public function canUpdateChild(FinancialBudget $child, float $budget): bool
+    public function canUpdateChild(Budget $child, float $budget): bool
     {
         $allocatedExcludingChild = $this->getAllocatedAmount() - (float) $child->amount;
 
@@ -69,7 +74,7 @@ class FinancialBudget extends Model
 
     public function getChild(Budgetable $budgetable): ?self
     {
-        return $this->children
+        return $this->children()
             ->where('budgetable_id', $budgetable->id)
             ->where('budgetable_type', get_class($budgetable))
             ->first();
@@ -94,37 +99,46 @@ class FinancialBudget extends Model
 
     public function getExpenses(): float
     {
-        return (float) $this->financialExpenses->sum('amount')
-            + $this->children->sum(fn (self $child) => $child->getExpenses());
+        $budgetIds = $this->descendantsAndSelf()->pluck('id');
+
+        return (float) Expense::whereIn('budget_id', $budgetIds)->sum('amount');
     }
 
     public function getAllocatedAmount(): float
     {
-        return (float) $this->children->sum('amount');
+        return (float) $this->children()->sum('amount');
     }
 
-    public function addChild(Budgetable $obj, float $budget = 0): FinancialBudget
+    public function addChild(Budgetable $obj, float $budget = 0): Budget
     {
-        if (!$this->canAddChild($budget)) {
-            throw new BudgetNotAllowedException("Budget $budget is greater than remaining allocated amount.");
-        }
+        return DB::transaction(function () use ($obj, $budget) {
+            $locked = static::query()->whereKey($this->getKey())->lockForUpdate()->firstOrFail();
 
-        return DB::transaction(fn () => $obj->financialBudget()->create([
-            'amount' => $budget,
-            'parent_id' => $this->id,
-        ]));
+            if (!$locked->canAddChild($budget)) {
+                throw new BudgetNotAllowedException("Budget $budget is greater than remaining allocated amount.");
+            }
+
+            return $obj->budget()->create([
+                'amount' => $budget,
+                'parent_id' => $locked->id,
+            ]);
+        });
     }
 
-    public function addExpense(Expensable $obj, float $amount = 0): FinancialExpense
+    public function addExpense(Expensable $obj, float $amount = 0): Expense
     {
-        if (!$this->canAddExpense($amount)) {
-            throw new BudgetNotAllowedException("Budget $amount is greater than remaining expensed amount");
-        }
+        return DB::transaction(function () use ($obj, $amount) {
+            $locked = static::query()->whereKey($this->getKey())->lockForUpdate()->firstOrFail();
 
-        return DB::transaction(fn () => $obj->expense()->create([
-            'amount' => $amount,
-            'financial_budget_id' => $this->id,
-        ]));
+            if (!$locked->canAddExpense($amount)) {
+                throw new BudgetNotAllowedException("Budget $amount is greater than remaining expensed amount");
+            }
+
+            return $obj->expense()->create([
+                'amount' => $amount,
+                'budget_id' => $locked->id,
+            ]);
+        });
     }
 
     public function getPercentage(): float
@@ -132,7 +146,7 @@ class FinancialBudget extends Model
         $parentAmount = (float) ($this->parent?->amount ?? 0);
 
         if ($parentAmount == 0) {
-            return 0;
+            return 0.0;
         }
 
         return round((float) $this->amount / $parentAmount * 100, 2);
