@@ -67,6 +67,10 @@ class Budget extends Model
 
     public function canUpdateChild(Budget $child, float $budget): bool
     {
+        if ($child->parent_id !== $this->id) {
+            throw new BudgetNotAllowedException("The provided budget is not a child of this budget.");
+        }
+
         $allocatedExcludingChild = $this->getAllocatedAmount() - (float) $child->amount;
 
         return $budget <= (float) $this->amount - $allocatedExcludingChild;
@@ -101,12 +105,12 @@ class Budget extends Model
     {
         $budgetIds = $this->descendantsAndSelf()->pluck('id');
 
-        return (float) Expense::whereIn('budget_id', $budgetIds)->sum('amount');
+        return round((float) Expense::whereIn('budget_id', $budgetIds)->sum('amount'), 2);
     }
 
     public function getAllocatedAmount(): float
     {
-        return (float) $this->children()->sum('amount');
+        return round((float) $this->children()->sum('amount'), 2);
     }
 
     public function addChild(Budgetable $obj, float $budget = 0): Budget
@@ -150,5 +154,14 @@ class Budget extends Model
         }
 
         return round((float) $this->amount / $parentAmount * 100, 2);
+    }
+
+    public function getBudgetableNameAttribute(): string
+    {
+        if ($this->budgetable && method_exists($this->budgetable, 'budgetLabel')) {
+            return (string) $this->budgetable->budgetLabel();
+        }
+
+        return $this->budgetable?->name ?? '';
     }
 }
