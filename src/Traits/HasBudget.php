@@ -3,6 +3,7 @@
 namespace Majeedfahad\BudgetManager\Traits;
 
 use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Majeedfahad\BudgetManager\Exceptions\BudgetNotAllowedException;
 use Majeedfahad\BudgetManager\Models\Budget;
 
 /**
@@ -20,7 +21,7 @@ trait HasBudget
     public function addBudget(float $amount): Budget
     {
         if ($this->budget) {
-            throw new \Exception('Budget already exists for this model.');
+            throw new BudgetNotAllowedException(__('budget-manager::messages.budget_already_exists'));
         }
 
         return $this->budget()->create([
@@ -31,7 +32,7 @@ trait HasBudget
     public function updateBudget(float $amount): Budget
     {
         if (!$this->budget) {
-            throw new \Exception('No budget exists for this model.');
+            throw new BudgetNotAllowedException(__('budget-manager::messages.budget_missing'));
         }
 
         $this->budget->updateBudget($amount);

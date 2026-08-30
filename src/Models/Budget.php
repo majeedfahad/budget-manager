@@ -68,7 +68,7 @@ class Budget extends Model
     public function canUpdateChild(Budget $child, float $budget): bool
     {
         if ($child->parent_id !== $this->id) {
-            throw new BudgetNotAllowedException("The provided budget is not a child of this budget.");
+            throw new BudgetNotAllowedException(__('budget-manager::messages.not_a_child_budget'));
         }
 
         $allocatedExcludingChild = $this->getAllocatedAmount() - (float) $child->amount;
@@ -87,15 +87,15 @@ class Budget extends Model
     public function updateBudget(float $budget): bool
     {
         if ($budget < $this->getExpenses()) {
-            throw new BudgetNotAllowedException("Budget $budget is less than the total expenses already recorded.");
+            throw new BudgetNotAllowedException(__('budget-manager::messages.below_recorded_expenses', ['amount' => $budget]));
         }
 
         if ($this->parent && !$this->parent->canUpdateChild($this, $budget)) {
-            throw new BudgetNotAllowedException("Budget $budget exceeds the amount allowed by the parent budget.");
+            throw new BudgetNotAllowedException(__('budget-manager::messages.exceeds_parent_budget', ['amount' => $budget]));
         }
 
         if ($budget < $this->getAllocatedAmount()) {
-            throw new BudgetNotAllowedException("Budget $budget is less than the amount already allocated to children.");
+            throw new BudgetNotAllowedException(__('budget-manager::messages.below_allocated_amount', ['amount' => $budget]));
         }
 
         return $this->update(['amount' => $budget]);
@@ -119,7 +119,7 @@ class Budget extends Model
             $locked = static::query()->whereKey($this->getKey())->lockForUpdate()->firstOrFail();
 
             if (!$locked->canAddChild($budget)) {
-                throw new BudgetNotAllowedException("Budget $budget is greater than remaining allocated amount.");
+                throw new BudgetNotAllowedException(__('budget-manager::messages.exceeds_remaining_allocated', ['amount' => $budget]));
             }
 
             return $obj->budget()->create([
@@ -135,7 +135,7 @@ class Budget extends Model
             $locked = static::query()->whereKey($this->getKey())->lockForUpdate()->firstOrFail();
 
             if (!$locked->canAddExpense($amount)) {
-                throw new BudgetNotAllowedException("Budget $amount is greater than remaining expensed amount");
+                throw new BudgetNotAllowedException(__('budget-manager::messages.exceeds_remaining_expensed', ['amount' => $amount]));
             }
 
             return $obj->expense()->create([
